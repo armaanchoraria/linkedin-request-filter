@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LinkedIn Request Filter</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+      width: 320px;
+      background: #1c1c1e;
+      color: #f2f2f7;
+    }
+
+    .header {
+      background: linear-gradient(145deg, #0a84ff 0%, #0055cc 100%);
+      padding: 18px 18px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .hicon {
+      width: 38px; height: 38px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 11px;
+      border: 1px solid rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 700; color: #fff;
+      letter-spacing: -1px; flex-shrink: 0;
+    }
+    .hcopy { flex: 1; }
+    .htitle { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+    .hsub   { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; }
+    .hpill  {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px; padding: 3px 10px;
+      font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.85);
+    }
+
+    .body { padding: 12px; }
+
+    .glabel {
+      font-size: 11px; font-weight: 600; color: #636366;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      padding: 0 4px 6px;
+    }
+
+    .card {
+      background: #2c2c2e; border-radius: 16px;
+      overflow: hidden; margin-bottom: 10px;
+    }
+    .cell {
+      padding: 13px 14px;
+      border-bottom: 0.5px solid #3a3a3c;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .cell:last-child { border-bottom: none; }
+    .cicon {
+      width: 32px; height: 32px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .cicon svg { width: 16px; height: 16px; }
+    .ci-blue { background: #0a3060; }
+    .ci-teal { background: #003320; }
+    .cbody { flex: 1; min-width: 0; }
+    .ctitle { font-size: 14px; font-weight: 600; color: #f2f2f7; letter-spacing: -0.2px; }
+    .csub   { font-size: 11.5px; color: #636366; margin-top: 2px; line-height: 1.45; }
+
+    textarea {
+      width: 100%; background: #3a3a3c; border: none; border-radius: 9px;
+      padding: 9px 11px; font-size: 12px; font-family: inherit;
+      color: #e5e5ea; resize: none; height: 60px;
+      margin-top: 8px; outline: none; line-height: 1.55;
+    }
+    textarea:focus { background: #444446; }
+
+    .stepper-wrap { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .stepper {
+      display: flex; align-items: center;
+      background: #3a3a3c; border-radius: 9px; height: 32px; overflow: hidden;
+    }
+    .sbtn {
+      width: 32px; height: 32px; background: none; border: none;
+      color: #0a84ff; font-size: 22px; font-weight: 300;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.1s; line-height: 1; padding-bottom: 2px;
+    }
+    .sbtn:hover { background: rgba(10,132,255,0.12); }
+    .sdiv { width: 0.5px; height: 18px; background: #48484a; }
+    .sval { min-width: 44px; text-align: center; font-size: 15px; font-weight: 700; color: #f2f2f7; letter-spacing: -0.5px; }
+    .shint { font-size: 11px; color: #48484a; line-height: 1.4; }
+
+    .btn-preview {
+      width: 100%; padding: 14px;
+      background: #2c2c2e; border: none; border-radius: 16px;
+      font-size: 15px; font-weight: 600; font-family: inherit; color: #0a84ff;
+      cursor: pointer; letter-spacing: -0.3px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.1s; margin-bottom: 10px;
+    }
+    .btn-preview:hover:not(:disabled) { background: #3a3a3c; }
+    .btn-preview:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pdot { width: 8px; height: 8px; border-radius: 50%; border: 2px solid #0a84ff; }
+
+    #previewPanel { display: none; }
+    .rcard { background: #2c2c2e; border-radius: 16px; overflow: hidden; margin-bottom: 10px; }
+    .rhead {
+      padding: 12px 16px;
+      display: flex; align-items: baseline; gap: 8px;
+      border-bottom: 0.5px solid #3a3a3c;
+    }
+    .rcount { font-size: 17px; font-weight: 700; color: #f2f2f7; letter-spacing: -0.5px; }
+    .rlabel { font-size: 12px; color: #636366; }
+    .rof    { font-size: 12px; color: #48484a; margin-left: auto; }
+
+    .plist { max-height: 180px; overflow-y: auto; }
+    .plist::-webkit-scrollbar { width: 3px; }
+    .plist::-webkit-scrollbar-thumb { background: #48484a; border-radius: 3px; }
+
+    .pitem {
+      padding: 10px 14px; border-bottom: 0.5px solid #3a3a3c;
+      display: flex; align-items: center; gap: 11px;
+    }
+    .pitem:last-child { border-bottom: none; }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+    .pinfo { flex: 1; min-width: 0; }
+    .pname { font-size: 13px; font-weight: 600; color: #f2f2f7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.2px; }
+    .phl   { font-size: 11px; color: #636366; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ptag  { font-size: 10px; font-weight: 600; background: #0a2a50; color: #4da3ff; border-radius: 6px; padding: 3px 8px; flex-shrink: 0; }
+    .pempty { padding: 20px; text-align: center; font-size: 13px; color: #48484a; line-height: 1.5; }
+
+    .rfooter {
+      display: flex; gap: 8px; padding: 10px 12px;
+      background: #242426; border-top: 0.5px solid #3a3a3c;
+    }
+    .btn-accept {
+      flex: 1; padding: 11px;
+      background: #0a84ff; border: none; border-radius: 11px;
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      color: #fff; cursor: pointer; letter-spacing: -0.2px; transition: opacity 0.1s;
+    }
+    .btn-accept:hover:not(:disabled) { opacity: 0.85; }
+    .btn-accept:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-ignore {
+      padding: 11px 14px;
+      background: #3a3a3c; border: none; border-radius: 11px;
+      font-size: 14px; font-weight: 500; font-family: inherit;
+      color: #ebebf0; cursor: pointer; letter-spacing: -0.2px; transition: background 0.1s;
+    }
+    .btn-ignore:hover:not(:disabled) { background: #48484a; }
+    .btn-ignore:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    #status {
+      display: none; font-size: 12px; line-height: 1.5;
+      padding: 10px 13px; border-radius: 12px; margin-bottom: 10px;
+    }
+    #status.info    { background: #0a2a50; color: #4da3ff; }
+    #status.success { background: #0a2a1a; color: #30d158; }
+    #status.warn    { background: #2a1a00; color: #ff9f0a; }
+
+    .safety {
+      padding: 11px 14px; background: #2c2c2e; border-radius: 13px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .safety svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .stext { font-size: 11.5px; color: #636366; line-height: 1.45; }
+    .stext b { color: #ebebf0; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="hicon">in</div>
+  <div class="hcopy">
+    <div class="htitle">Request Filter</div>
+    <div class="hsub">LinkedIn · Invitation Manager</div>
+  </div>
+  <div class="hpill">25 / session</div>
+</div>
+
+<div class="body">
+
+  <div class="glabel">Filters</div>
+  <div class="card">
+    <div class="cell">
+      <div class="cicon ci-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4da3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </div>
+      <div class="cbody">
+        <div class="ctitle">Keywords in bio</div>
+        <div class="csub">Comma-separated. Matches any word in their card.</div>
+        <textarea id="keywords" placeholder="founder, VC, angel, YC…"></textarea>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="cicon ci-teal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#30d158" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="cbody">
+        <div class="ctitle">Mutual connections</div>
+        <div class="csub">Accept anyone with at least this many mutuals.</div>
+        <div class="stepper-wrap">
+          <div class="stepper">
+            <button class="sbtn" id="sdown">−</button>
+            <div class="sdiv"></div>
+            <div class="sval" id="sval">30</div>
+            <div class="sdiv"></div>
+            <button class="sbtn" id="sup">+</button>
+          </div>
+          <span class="shint">0 = disabled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="glabel">Actions</div>
+
+  <button class="btn-preview" id="previewBtn">
+    <div class="pdot"></div> Preview matches first
+  </button>
+
+  <div id="previewPanel">
+    <div class="rcard">
+      <div class="rhead">
+        <span class="rcount" id="rcount">0</span>
+        <span class="rlabel">matches</span>
+        <span class="rof" id="rof"></span>
+      </div>
+      <div class="plist" id="plist"></div>
+      <div class="rfooter">
+        <button class="btn-accept" id="acceptBtn">✓ Accept</button>
+        <button class="btn-ignore" id="ignoreBtn">✕ Ignore rest</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <div class="safety">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#636366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+    <span class="stext">Runs at <b>human-like speed</b> with random 2–6s delays. Max <b>25 accepts/session.</b></span>
+  </div>
+
+</div>
+<script src="popup.js"></script>
+</body>
+</html>
